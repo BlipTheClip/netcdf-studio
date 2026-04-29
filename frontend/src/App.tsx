@@ -1,14 +1,16 @@
 import { useState } from "react";
 import { useBackendStatus } from "@/hooks/useBackendStatus";
 import { DownloaderPage } from "@/modules/downloader/DownloaderPage";
+import { ImageryPage } from "@/modules/imagery/ImageryPage";
 import { ProcessorPage } from "@/modules/processor/ProcessorPage";
 import { Spinner } from "@/components/Spinner";
 
-type ModuleId = "downloader" | "processor";
+type ModuleId = "downloader" | "processor" | "imagery";
 
 const NAV: { id: ModuleId; label: string }[] = [
   { id: "downloader", label: "A — Downloader" },
   { id: "processor",  label: "B — Processor" },
+  { id: "imagery",    label: "C — Imagery" },
 ];
 
 export default function App() {
@@ -79,6 +81,7 @@ export default function App() {
       <main className="flex-1 overflow-hidden">
         {activeModule === "downloader" && <DownloaderPage />}
         {activeModule === "processor"  && <ProcessorPage />}
+        {activeModule === "imagery"    && <ImageryPage />}
       </main>
     </div>
   );

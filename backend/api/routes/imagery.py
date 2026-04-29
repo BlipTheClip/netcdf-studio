@@ -159,6 +159,13 @@ class MapRenderRequest(BaseModel):
     lat_max: float | None         = None
     lon_min: float | None         = None
     lon_max: float | None         = None
+    # Optional quiver (vector field) overlay
+    u_variable: str | None        = None
+    v_variable: str | None        = None
+    quiver_stride: int            = Field(default=5, ge=1, le=50)
+    quiver_scale: float | None    = None
+    quiver_color: str             = "black"
+    quiver_alpha: float           = Field(default=0.7, ge=0.0, le=1.0)
 
 
 class HovmollerRenderRequest(BaseModel):
@@ -223,6 +230,12 @@ class BatchMapJob(BaseModel):
     lat_max: float | None         = None
     lon_min: float | None         = None
     lon_max: float | None         = None
+    u_variable: str | None        = None
+    v_variable: str | None        = None
+    quiver_stride: int            = Field(default=5, ge=1, le=50)
+    quiver_scale: float | None    = None
+    quiver_color: str             = "black"
+    quiver_alpha: float           = Field(default=0.7, ge=0.0, le=1.0)
 
 
 class BatchRequest(BaseModel):
@@ -266,6 +279,12 @@ async def render_single_map(req: MapRenderRequest) -> dict | JSONResponse:
                 lat_max          = req.lat_max,
                 lon_min          = req.lon_min,
                 lon_max          = req.lon_max,
+                u_variable       = req.u_variable,
+                v_variable       = req.v_variable,
+                quiver_stride    = req.quiver_stride,
+                quiver_scale     = req.quiver_scale,
+                quiver_color     = req.quiver_color,
+                quiver_alpha     = req.quiver_alpha,
             )
             w_px = int(req.figsize[0] * req.dpi)
             h_px = int(req.figsize[1] * req.dpi)
@@ -467,6 +486,12 @@ async def ws_batch_imagery(ws: WebSocket) -> None:
                     lat_max          = j.lat_max,
                     lon_min          = j.lon_min,
                     lon_max          = j.lon_max,
+                    u_variable       = j.u_variable,
+                    v_variable       = j.v_variable,
+                    quiver_stride    = j.quiver_stride,
+                    quiver_scale     = j.quiver_scale,
+                    quiver_color     = j.quiver_color,
+                    quiver_alpha     = j.quiver_alpha,
                 )
                 return str(out)
             finally:

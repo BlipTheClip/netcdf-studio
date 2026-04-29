@@ -13,20 +13,30 @@
 
 import type {
   AnomalyRequest,
+  BatchImageryRequest,
+  BatchImageryResultPayload,
+  BatchImageryProgressPayload,
   ClimatologyRequest,
   DownloaderSearchRequest,
   DownloaderSearchResponse,
   FileMetadata,
   HealthResponse,
+  HovmollerRenderRequest,
+  HovmollerRenderResponse,
   IndexResult,
   IndicesRequest,
+  MapRenderRequest,
+  MapRenderResponse,
   PreviewRequest,
   ProcessedFileResult,
   SliceResult,
   SourcesData,
   SpatialMeanRequest,
   SpatialMeanResult,
+  TaylorRenderRequest,
+  TaylorRenderResponse,
   VariablesResponse,
+  WsBatchImageryMessage,
   WsDownloadMessage,
   WsHandle,
   WsMessage,
@@ -327,9 +337,46 @@ export function createDownloadWs(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Module C: imagery
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const imagery = {
+  /** Render a single cartopy map and save to disk. Returns output path + dimensions. */
+  renderMap: (req: MapRenderRequest): Promise<MapRenderResponse> =>
+    post<MapRenderRequest, MapRenderResponse>("/api/imagery/render-map", req),
+
+  /** Render a Hovmöller diagram (time × lat or time × lon). */
+  renderHovmoller: (req: HovmollerRenderRequest): Promise<HovmollerRenderResponse> =>
+    post<HovmollerRenderRequest, HovmollerRenderResponse>("/api/imagery/render-hovmoller", req),
+
+  /** Render a Taylor diagram comparing multiple models against a reference. */
+  renderTaylor: (req: TaylorRenderRequest): Promise<TaylorRenderResponse> =>
+    post<TaylorRenderRequest, TaylorRenderResponse>("/api/imagery/render-taylor", req),
+} as const;
+
+/**
+ * Open the /ws/imagery/batch WebSocket and return a WsHandle.
+ *
+ * In `onOpen`, call `handle.send(request)` via a ref to start the batch.
+ * The `onMessage` callback receives typed progress/result/error events.
+ */
+export function createBatchImageryWs(
+  onMessage: (msg: WsBatchImageryMessage) => void,
+  onOpen?: () => void,
+  onClose?: () => void,
+): WsHandle {
+  return createWsConnection<unknown, WsProgressPayload>(
+    "/ws/imagery/batch",
+    (raw) => onMessage(raw as unknown as WsBatchImageryMessage),
+    onOpen,
+    onClose,
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Default export — convenience bundle for components that need all modules
 // ─────────────────────────────────────────────────────────────────────────────
 
-const api = { health, processor, downloader } as const;
+const api = { health, processor, downloader, imagery } as const;
 
 export default api;

@@ -374,6 +374,157 @@ export type WsDownloadMessage =
   | { type: "error";    payload: WsErrorPayload };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Module C — Imagery
+// Mirrors: backend/api/routes/imagery.py
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type ProjectionName =
+  | "PlateCarree" | "Robinson" | "Mollweide"
+  | "NorthPolarStereo" | "SouthPolarStereo"
+  | "LambertConformal" | "Mercator";
+
+export interface MapRenderRequest {
+  path: string;
+  variable: string;
+  output_path: string;
+  time_index?: number;
+  plev_level?: number | null;
+  plev_levels?: number[] | null;
+  projection?: ProjectionName;
+  central_longitude?: number;
+  cmap?: string;
+  vmin?: number | null;
+  vmax?: number | null;
+  title?: string;
+  dpi?: number;
+  figsize?: [number, number];
+  add_coastlines?: boolean;
+  add_borders?: boolean;
+  add_gridlines?: boolean;
+  add_colorbar?: boolean;
+  lat_min?: number | null;
+  lat_max?: number | null;
+  lon_min?: number | null;
+  lon_max?: number | null;
+  /** Optional vector-field quiver overlay (e.g. wind u/v components). */
+  u_variable?: string | null;
+  v_variable?: string | null;
+  quiver_stride?: number;
+  quiver_scale?: number | null;
+  quiver_color?: string;
+  quiver_alpha?: number;
+}
+
+export interface MapRenderResponse {
+  output_path: string;
+  width_px: number;
+  height_px: number;
+}
+
+export interface HovmollerRenderRequest {
+  path: string;
+  variable: string;
+  output_path: string;
+  /** "lat" = time × latitude (lon-averaged); "lon" = time × longitude (lat-weighted). */
+  mode?: "lat" | "lon";
+  plev_level?: number | null;
+  plev_levels?: number[] | null;
+  lat_min?: number;
+  lat_max?: number;
+  lon_min?: number;
+  lon_max?: number;
+  cmap?: string;
+  vmin?: number | null;
+  vmax?: number | null;
+  title?: string;
+  dpi?: number;
+  figsize?: [number, number];
+  add_colorbar?: boolean;
+  n_time_ticks?: number;
+}
+
+export interface HovmollerRenderResponse {
+  output_path: string;
+}
+
+export interface TaylorModelItem {
+  name: string;
+  std_ratio: number;
+  correlation: number;
+  color?: string;
+  marker?: string;
+}
+
+export interface TaylorRenderRequest {
+  models: TaylorModelItem[];
+  output_path: string;
+  title?: string;
+  max_std_ratio?: number;
+  dpi?: number;
+  figsize?: [number, number];
+}
+
+export interface TaylorRenderResponse {
+  output_path: string;
+}
+
+/** One map job inside a batch rendering request. */
+export interface BatchImageryJob {
+  path: string;
+  variable: string;
+  output_path: string;
+  time_index?: number;
+  plev_level?: number | null;
+  plev_levels?: number[] | null;
+  projection?: ProjectionName;
+  central_longitude?: number;
+  cmap?: string;
+  vmin?: number | null;
+  vmax?: number | null;
+  title?: string;
+  dpi?: number;
+  figsize?: [number, number];
+  add_coastlines?: boolean;
+  add_borders?: boolean;
+  add_gridlines?: boolean;
+  add_colorbar?: boolean;
+  lat_min?: number | null;
+  lat_max?: number | null;
+  lon_min?: number | null;
+  lon_max?: number | null;
+  u_variable?: string | null;
+  v_variable?: string | null;
+  quiver_stride?: number;
+  quiver_color?: string;
+}
+
+export interface BatchImageryRequest {
+  jobs: BatchImageryJob[];
+  max_ram_gb?: number;
+}
+
+/** Progress event for one job in a batch render (WS /ws/imagery/batch). */
+export interface BatchImageryProgressPayload {
+  current: number;
+  total: number;
+  file: string;
+  status: "rendering" | "completed" | "failed";
+  message: string;
+  error?: string;
+}
+
+export interface BatchImageryResultPayload {
+  completed: number;
+  failed: number;
+  files: string[];
+}
+
+export type WsBatchImageryMessage =
+  | { type: "progress"; payload: BatchImageryProgressPayload }
+  | { type: "result";   payload: BatchImageryResultPayload }
+  | { type: "error";    payload: WsErrorPayload };
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Helper / union types
 // ─────────────────────────────────────────────────────────────────────────────
 

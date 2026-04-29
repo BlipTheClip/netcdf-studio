@@ -157,6 +157,13 @@ def render_map(
     lat_max: float | None = None,
     lon_min: float | None = None,
     lon_max: float | None = None,
+    # Optional vector-field quiver overlay
+    u_variable: str | None = None,
+    v_variable: str | None = None,
+    quiver_stride: int = 5,
+    quiver_scale: float | None = None,
+    quiver_color: str = "black",
+    quiver_alpha: float = 0.7,
 ) -> Path:
     """
     Render a 2D lat/lon map and save it as a PNG image.
@@ -252,6 +259,27 @@ def render_map(
             transform=ccrs.PlateCarree(),
             zorder=5,
         )
+
+    # Quiver overlay: draw wind / vector arrows
+    if u_variable and v_variable:
+        try:
+            lat_q, lon_q, u_data = _extract_slice(ds, u_variable, time_index, plev_level)
+            _,     _,     v_data = _extract_slice(ds, v_variable, time_index, plev_level)
+            lat_qt = lat_q[::quiver_stride]
+            lon_qt = lon_q[::quiver_stride]
+            u_q    = u_data[::quiver_stride, ::quiver_stride]
+            v_q    = v_data[::quiver_stride, ::quiver_stride]
+            lon_qg, lat_qg = np.meshgrid(lon_qt, lat_qt)
+            ax.quiver(
+                lon_qg, lat_qg, u_q, v_q,
+                transform=ccrs.PlateCarree(),
+                color=quiver_color,
+                alpha=quiver_alpha,
+                scale=quiver_scale,
+                zorder=4,
+            )
+        except Exception as qe:
+            logger.warning("Quiver overlay skipped (%s / %s): %s", u_variable, v_variable, qe)
 
     if add_coastlines:
         ax.add_feature(cfeature.COASTLINE, linewidth=0.5, zorder=3)
