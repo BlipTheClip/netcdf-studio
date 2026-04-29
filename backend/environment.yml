@@ -1,0 +1,91 @@
+name: netcdf-studio
+
+channels:
+  - conda-forge
+  - defaults
+
+dependencies:
+  - python=3.11
+
+  # -----------------------------------------------------------------------
+  # Data I/O & core processing  (Modules B, C, D)
+  # -----------------------------------------------------------------------
+  - xarray>=2024.1          # primary data structure for all NetCDF operations
+  - dask>=2024.4            # lazy / out-of-core computation
+  - distributed>=2024.4     # dask distributed scheduler (optional but useful for large ensembles)
+  - netcdf4>=1.6            # primary NetCDF4 / HDF5 backend for xarray
+  - h5netcdf>=1.3           # alternative HDF5 backend (handles some quirks netcdf4 can't)
+  - numpy>=1.26
+  - scipy>=1.13             # p-values (stippling), signal processing
+  - bottleneck>=1.3         # accelerates xarray nan-reductions (mean, std, etc.)
+  - flox>=0.9               # accelerates xarray groupby — critical for climatologies
+  - nc-time-axis>=1.4       # non-standard CMIP calendars (360-day, noleap, all-leap)
+  - cftime>=1.6             # non-standard calendar objects
+  - cf_xarray>=0.9          # CF-convention coordinate discovery (standard_name lookups)
+
+  # -----------------------------------------------------------------------
+  # Regridding  (Module B)
+  # -----------------------------------------------------------------------
+  - xesmf>=0.8              # conservative regridding — wraps ESMF via esmpy
+  # Note: esmpy and ESMF are pulled in automatically by xesmf on conda-forge.
+  # On Windows, install via: conda install -c conda-forge xesmf
+
+  # -----------------------------------------------------------------------
+  # Visualisation  (Modules C, D)
+  # -----------------------------------------------------------------------
+  - matplotlib>=3.8         # all server-side map and diagram generation
+  - cartopy>=0.23           # map projections, coastlines, land/ocean masks
+  - pillow>=10.3            # image encoding for batch export (PNG, TIFF, PDF)
+  - cmocean>=3.0            # perceptually-uniform oceanographic/climate colormaps
+
+  # -----------------------------------------------------------------------
+  # Backend / API  (all modules)
+  # -----------------------------------------------------------------------
+  - fastapi>=0.111
+  - uvicorn>=0.29           # ASGI server (use uvicorn[standard] equivalent via extras)
+  - websockets>=12.0        # WebSocket support for progress streams
+  - pydantic>=2.7           # request/response validation (FastAPI v2 uses pydantic v2)
+  - python-multipart>=0.0.9 # multipart form data for file uploads
+  - httpx>=0.27             # async HTTP client (also serves as FastAPI test client)
+  - aiofiles>=23.2          # async file reads/writes in route handlers
+  - starlette>=0.37         # ASGI toolkit (pulled by FastAPI; pinned for WebSocket stability)
+
+  # -----------------------------------------------------------------------
+  # Cloud / S3 storage  (Module A — WorldBank CCKP, NASA/NOAA AWS)
+  # -----------------------------------------------------------------------
+  - boto3>=1.34             # S3 anonymous access; UNSIGNED config, no credentials needed
+  - botocore>=1.34          # boto3 dependency (explicit for version locking)
+
+  # -----------------------------------------------------------------------
+  # General utilities
+  # -----------------------------------------------------------------------
+  - requests>=2.31          # sync HTTP for ESA CCI Open Data Portal
+  - tqdm>=4.66              # progress bars in CLI and logging contexts
+  - psutil>=6.0             # RAM monitoring for batch image generation RAM limit
+  - pyyaml>=6.0             # YAML config files
+  - python-dotenv>=1.0      # .env file support for API keys (CDS, ESGF credentials)
+  - tenacity>=8.3           # retry logic for ESGF node failover and CDS polling
+
+  # -----------------------------------------------------------------------
+  # Development & testing
+  # -----------------------------------------------------------------------
+  - pytest>=8.2
+  - pytest-asyncio>=0.23    # async test support for FastAPI/WebSocket routes
+  - pytest-cov>=5.0         # coverage reporting
+  - black>=24.4             # formatter
+  - ruff>=0.4               # linter (replaces flake8, isort, pyupgrade)
+  - mypy>=1.10              # static type checking
+  - types-requests>=2.31    # mypy stubs for requests
+
+  # -----------------------------------------------------------------------
+  # Pip-only packages  (not available on conda-forge or prefer pip version)
+  # -----------------------------------------------------------------------
+  - pip:
+      # MCP server framework — Module E
+      - fastmcp>=2.0
+
+      # ECMWF official Copernicus CDS client — Module A (ERA5)
+      - cdsapi>=0.7
+
+      # ESGF search and download client — Module A (CMIP6)
+      - esgf-pyclient>=0.3.2

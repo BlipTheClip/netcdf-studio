@@ -41,6 +41,38 @@ This file provides Claude Code with full context about the project architecture,
 
 ---
 
+## Cross-Platform Compatibility
+
+NetCDF Studio targets **Windows, macOS, and Linux**. Every code and packaging decision must work on all three.
+
+### Distribution
+- Use **electron-builder** to produce platform installers:
+  - Windows: `.exe` (NSIS installer) and optionally `.msi`
+  - macOS: `.dmg` + code-signed `.app` bundle
+  - Linux: `.AppImage` (primary), `.deb`, `.rpm`
+- The conda environment is bundled or the installer bootstraps miniconda — the user should never need to run `conda` manually.
+- The Electron main process must locate the Python interpreter relative to the bundle, not from `PATH`.
+
+### Path handling
+- **Never hardcode path separators.** Use `pathlib.Path` in Python and `path.join()` / `path.resolve()` in Node.js/TypeScript.
+- In Python, always call `str(path)` when passing to xarray/netCDF4 (they do not accept `Path` objects on all platforms).
+- In Electron, use `path.join(app.getPath('userData'), ...)` for user data, never `__dirname` strings with manual separators.
+
+### xesmf on Windows
+- xesmf depends on ESMF, which has no official Windows conda package on conda-forge as of 2024.
+- **Workaround**: xesmf is an optional dependency. Wrap every import in `try/except ImportError` and degrade gracefully (disable the regrid UI panel, show a banner explaining ESMF is unavailable on Windows).
+- In `regridder.py`, the `ImportError` guard is already in place — do not remove it.
+- The installation README must document: "xesmf/ESMF are not available on native Windows. Use WSL2 or a Linux/macOS machine if conservative regridding is required."
+- Alternatively, if running under WSL2, xesmf works normally — detect via `platform.system() == "Linux"` inside a Windows build.
+
+### Platform-specific gotchas
+- **Windows file locking**: NetCDF files opened with netCDF4/HDF5 are write-locked. Always call `ds.close()` (or use a context manager) before attempting to overwrite an output file.
+- **macOS Gatekeeper**: The app bundle must be code-signed and notarized for distribution. CI should use `electron-builder`'s `--publish` flag with Apple credentials.
+- **Linux font rendering**: cartopy maps use matplotlib fonts — ensure `matplotlib.font_manager.rebuild()` is called on first run if fonts are missing.
+- **Windows console encoding**: Set `PYTHONUTF8=1` in the Electron main process's environment before spawning the Python subprocess to avoid cp1252 encoding errors in log output.
+
+---
+
 ## Key Technical Decisions
 
 ### Why Electron (not Tauri)
@@ -198,6 +230,7 @@ These are non-negotiable for scientific correctness:
 - **Copernicus CDS async jobs**: CDS requests are queued server-side and can take minutes. Use polling with `cdsapi` status checks and report progress via WebSocket.
 - **S3 anonymous access (WorldBank/NASA)**: Use `boto3` with `UNSIGNED` config. Never require AWS credentials for these sources.
 - **ERA5 GRIB vs NetCDF**: CDS can return GRIB or NetCDF. Always request `'data_format': 'netcdf'` explicitly. Some ERA5 complete datasets require `'grid'` keyword to convert from native grid to regular lat/lon.
+- **xesmf on Windows**: ESMF has no native Windows conda package. xesmf import is wrapped in `try/except ImportError` in `regridder.py` — keep it that way. See the Cross-Platform Compatibility section for the full workaround.
 
 ---
 
