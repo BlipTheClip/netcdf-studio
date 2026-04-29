@@ -1,16 +1,19 @@
+import { useState } from "react";
 import { useBackendStatus } from "@/hooks/useBackendStatus";
+import { DownloaderPage } from "@/modules/downloader/DownloaderPage";
 import { ProcessorPage } from "@/modules/processor/ProcessorPage";
 import { Spinner } from "@/components/Spinner";
 
-// Top-level module IDs — extend as other modules are implemented.
-type ModuleId = "processor";
+type ModuleId = "downloader" | "processor";
 
 const NAV: { id: ModuleId; label: string }[] = [
-  { id: "processor", label: "B — Processor" },
+  { id: "downloader", label: "A — Downloader" },
+  { id: "processor",  label: "B — Processor" },
 ];
 
 export default function App() {
   const { status, version, error } = useBackendStatus();
+  const [activeModule, setActiveModule] = useState<ModuleId>("downloader");
 
   // ── Backend not yet ready ──────────────────────────────────────────────────
 
@@ -54,7 +57,13 @@ export default function App() {
           {NAV.map((item) => (
             <button
               key={item.id}
-              className="px-3 py-1 rounded text-sm bg-slate-700 text-white"
+              onClick={() => setActiveModule(item.id)}
+              className={[
+                "px-3 py-1 rounded text-sm transition-colors",
+                activeModule === item.id
+                  ? "bg-slate-700 text-white"
+                  : "text-slate-400 hover:text-slate-200 hover:bg-slate-800",
+              ].join(" ")}
             >
               {item.label}
             </button>
@@ -68,7 +77,8 @@ export default function App() {
 
       {/* Module content */}
       <main className="flex-1 overflow-hidden">
-        <ProcessorPage />
+        {activeModule === "downloader" && <DownloaderPage />}
+        {activeModule === "processor"  && <ProcessorPage />}
       </main>
     </div>
   );

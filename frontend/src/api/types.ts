@@ -290,6 +290,90 @@ export type WsMessage<
 > = WsProgressMessage<TProgress> | WsResultMessage<TResult> | WsErrorMessage;
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Module A — Downloader
+// Mirrors: backend/api/routes/downloader.py + backend/core/downloader/base.py
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface SourceMeta {
+  name: string;
+  full_name: string;
+  description: string;
+  requires_auth: boolean;
+  auth_instructions?: string;
+  auto_folder: string;
+  search_params: Record<string, string>;
+}
+
+export interface SourcesData {
+  sources: Record<string, SourceMeta>;
+}
+
+/** Mirrors backend Dataset.to_dict() */
+export interface DatasetItem {
+  id: string;
+  source: string;
+  title: string;
+  description: string;
+  url: string | null;
+  size_mb: number | null;
+  variables: string[];
+  frequency: string | null;
+  metadata: Record<string, unknown>;
+}
+
+export interface DownloaderSearchRequest {
+  variable?: string | null;
+  start_year?: number | null;
+  end_year?: number | null;
+  frequency?: string | null;
+  limit?: number;
+  params?: Record<string, unknown>;
+}
+
+export interface DownloaderSearchResponse {
+  source: string;
+  total: number;
+  datasets: DatasetItem[];
+}
+
+/** Sent once from client over /ws/download to initiate a batch download. */
+export interface DownloadWsRequest {
+  source: string;
+  datasets: DatasetItem[];
+  dest_dir: string;
+  max_concurrent: number;
+}
+
+export type DownloadFileStatus = "queued" | "downloading" | "completed" | "failed";
+
+/** Per-file progress event streamed by the server over /ws/download. */
+export interface DownloadProgressPayload {
+  file: string;
+  current_file: number;
+  total_files: number;
+  percent: number;
+  downloaded_bytes: number;
+  total_bytes: number;
+  speed_mbps: number;
+  status: DownloadFileStatus;
+  message: string;
+  error?: string;
+}
+
+/** Final result message sent after all files complete. */
+export interface DownloadResultPayload {
+  completed: number;
+  failed: number;
+  dest_dir: string;
+  files: string[];
+}
+
+export type WsDownloadMessage =
+  | { type: "progress"; payload: DownloadProgressPayload }
+  | { type: "result";   payload: DownloadResultPayload }
+  | { type: "error";    payload: WsErrorPayload };
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Helper / union types
 // ─────────────────────────────────────────────────────────────────────────────
 

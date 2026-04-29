@@ -14,6 +14,8 @@
 import type {
   AnomalyRequest,
   ClimatologyRequest,
+  DownloaderSearchRequest,
+  DownloaderSearchResponse,
   FileMetadata,
   HealthResponse,
   IndexResult,
@@ -21,9 +23,11 @@ import type {
   PreviewRequest,
   ProcessedFileResult,
   SliceResult,
+  SourcesData,
   SpatialMeanRequest,
   SpatialMeanResult,
   VariablesResponse,
+  WsDownloadMessage,
   WsHandle,
   WsMessage,
   WsProgressPayload,
@@ -283,9 +287,49 @@ export const processor = {
 } as const;
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Module A: downloader
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const downloader = {
+  /** Return metadata for all supported data sources (used to build the source selector UI). */
+  getSources: (): Promise<SourcesData> =>
+    get<SourcesData>("/api/downloader/sources"),
+
+  /** Search a specific source for datasets matching the query. */
+  search: (source: string, req: DownloaderSearchRequest): Promise<DownloaderSearchResponse> =>
+    post<DownloaderSearchRequest, DownloaderSearchResponse>(
+      `/api/downloader/${source}/search`,
+      req,
+    ),
+} as const;
+
+/**
+ * Open the /ws/download WebSocket endpoint and return a WsHandle.
+ *
+ * In `onOpen`, call `handle.send(request)` via the returned WsHandle (or a ref
+ * to it) to start the download batch.  The `onMessage` callback receives typed
+ * progress/result/error events.
+ *
+ * WsDownloadMessage uses different field names than the generic WsProgressPayload,
+ * so we open the connection with loose types and re-cast inside the callback.
+ */
+export function createDownloadWs(
+  onMessage: (msg: WsDownloadMessage) => void,
+  onOpen?: () => void,
+  onClose?: () => void,
+): WsHandle {
+  return createWsConnection<unknown, WsProgressPayload>(
+    "/ws/download",
+    (raw) => onMessage(raw as unknown as WsDownloadMessage),
+    onOpen,
+    onClose,
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Default export — convenience bundle for components that need all modules
 // ─────────────────────────────────────────────────────────────────────────────
 
-const api = { health, processor } as const;
+const api = { health, processor, downloader } as const;
 
 export default api;
