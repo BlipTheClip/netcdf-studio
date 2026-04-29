@@ -211,11 +211,11 @@ Implement in this order:
 |--------|---------|----------|
 | A — Downloader | ✅ Completo | ✅ Completo |
 | B — Processor  | ✅ Completo | ✅ Completo |
-| C — Imagery    | ✅ Completo | ⬜ Pendiente |
+| C — Imagery    | ✅ Completo | ✅ Completo |
 | D — Visualizer | ⬜ Pendiente | ⬜ Pendiente |
 | E — MCP        | ⬜ Pendiente | — (sin UI) |
 
-**Próximo paso:** Frontend Module C — UI del generador de imágenes (`frontend/src/modules/imagery/`).
+**Próximo paso:** Backend Module D — Visual workbench (`frontend/src/modules/visualizer/` + `backend/api/routes/visualizer.py`).
 
 ### Resumen de lo implementado
 
@@ -241,6 +241,19 @@ Implement in this order:
 - `frontend/src/store/processorStore.ts` — Zustand store (filePath, metadata, results, activeTab)
 - `ProcessorPage`, `FileLoader`, `MetadataPanel`, `VariableSelector`, `PlevSelector` (chips)
 - `ClimatologyForm`, `AnomalyForm`, `SpatialMeanPanel` (Plotly lazy), `PreviewPanel` (heatmap lazy), `IndicesPanel` (12 índices, Plotly lazy)
+
+**Module C — Imagery (frontend)**
+- `frontend/src/api/types.ts` — ProjectionName, MapRenderRequest/Response, HovmollerRenderRequest/Response, TaylorModelItem/RenderRequest/Response, BatchImageryJob/Request/Progress/Result, WsBatchImageryMessage
+- `frontend/src/api/client.ts` — imagery.renderMap/renderHovmoller/renderTaylor, createBatchImageryWs
+- `frontend/src/hooks/useFileMetadata.ts` — browse dialog → getMetadata → variables + plev levels
+- `frontend/src/store/imageryStore.ts` — Zustand: activeTab, map/hovmoller/taylor previews, Taylor models list, batch jobs + progress + result
+- `ImageryPage.tsx` — 4 tabs: Map | Hovmöller | Taylor | Batch
+- `MapForm.tsx` — proyección (7), colormap, bbox, quiver config, render + preview
+- `HovmollerForm.tsx` — modo lat/lon, dominio espacial, render + preview
+- `TaylorForm.tsx` — tabla de modelos editable (std_ratio, corr, color, marker), render + preview
+- `BatchForm.tsx` — lista de jobs editable, RAM slider, WS lifecycle con wsRef pattern
+- `BatchProgress.tsx` — barras de progreso por job, resumen final, botón Back
+- `ImagePreview.tsx` — file:// URL → `<img>` con normalización de paths Windows/Unix
 
 **Module C — Imagery (backend)**
 - `backend/core/plotting/maps.py` — `render_map()`: cartopy maps con 7 proyecciones, stippling estadístico, bounding box, coastlines, gridlines, colorbar
