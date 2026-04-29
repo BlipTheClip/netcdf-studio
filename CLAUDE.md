@@ -205,6 +205,61 @@ Implement in this order:
 
 ---
 
+## Estado actual del desarrollo
+
+| Módulo | Backend | Frontend |
+|--------|---------|----------|
+| A — Downloader | ✅ Completo | ✅ Completo |
+| B — Processor  | ✅ Completo | ✅ Completo |
+| C — Imagery    | ⬜ Pendiente | ⬜ Pendiente |
+| D — Visualizer | ⬜ Pendiente | ⬜ Pendiente |
+| E — MCP        | ⬜ Pendiente | — (sin UI) |
+
+**Próximo paso:** `backend/core/plotting/maps.py` — generador de imágenes de mapas (Module C backend).
+
+### Resumen de lo implementado
+
+**Module B — Processor (backend)**
+- `backend/core/netcdf/_coords.py` — detección de coordenadas (lat/lon/plev/time) compartida
+- `backend/core/netcdf/loader.py` — metadatos sin cargar datos, detección de frecuencia temporal, resolución de grilla
+- `backend/core/netcdf/processor.py` — climatologías, anomalías, media espacial con pesos coseno-latitud
+- `backend/core/netcdf/regridder.py` — wrapper xesmf con guard `try/except ImportError` para Windows
+- `backend/core/netcdf/indices.py` — 12 índices: ENSO (Niño 3.4/3/4/1+2/ONI), NAO, 6 ETCCDI de precipitación
+- `backend/api/routes/processor.py` — REST: `/api/processor/{metadata,variables,climatology,anomaly,spatial-mean,preview,indices}`
+
+**Module A — Downloader (backend)**
+- `backend/core/downloader/base.py` — ABC + dataclasses `SearchQuery`/`Dataset`/`Progress` + helpers `_http_stream`/`_s3_download`
+- `backend/core/downloader/parallel.py` — descarga paralela con `asyncio.Semaphore` + `asyncio.Queue`
+- `backend/core/downloader/esgf.py` — pyesgf, failover 4 nodos, descarga HTTPS
+- `backend/core/downloader/copernicus.py` — cdsapi en executor, polling de tamaño de archivo para progreso
+- `backend/core/downloader/worldbank.py` — boto3 UNSIGNED, `s3://wbg-cckp/`
+- `backend/core/downloader/nasa_aws.py` — boto3 UNSIGNED, CESM-LE + Argo
+- `backend/core/downloader/esa_cci.py` — catálogo CEDA REST, httpx, Basic auth por env vars
+- `backend/api/routes/downloader.py` — GET `/api/downloader/sources`, POST `/api/downloader/{source}/search`, WS `/ws/download`
+
+**Module B — Processor (frontend)**
+- `frontend/src/store/processorStore.ts` — Zustand store (filePath, metadata, results, activeTab)
+- `ProcessorPage`, `FileLoader`, `MetadataPanel`, `VariableSelector`, `PlevSelector` (chips)
+- `ClimatologyForm`, `AnomalyForm`, `SpatialMeanPanel` (Plotly lazy), `PreviewPanel` (heatmap lazy), `IndicesPanel` (12 índices, Plotly lazy)
+
+**Module A — Downloader (frontend)**
+- `frontend/src/store/downloaderStore.ts` — Zustand store (sources, search, selection, download state)
+- `SourceSelector` — 5 tarjetas de fuentes con badge Free/Auth
+- `SearchForm` — campos comunes + params específicos por fuente desde `_SOURCE_META`
+- `SearchResults` — lista con checkboxes, chips de variables, tamaño, frecuencia
+- `DownloadQueue` — destino, slider de concurrencia, botón Start
+- `DownloadProgress` — barras de progreso por archivo, velocidad, resumen final
+- WS lifecycle en `DownloaderPage`: `wsRef` + `createDownloadWs()`, envía request en `onOpen`
+
+**Infraestructura frontend**
+- Electron 33 + Vite 6 + React 18 + TypeScript strict + Tailwind CSS
+- `electron/main.ts` — spawn uvicorn, poll `/api/health` (30s), IPC para diálogos nativos
+- `electron/preload.ts` — `contextBridge` expone `window.electronAPI.openFile/saveFile`
+- Hooks: `useBackendStatus` (poll cada 5s), `useWebSocket` (WsHandle en useRef)
+- Componentes compartidos: Button, Input, Select, Card, Spinner, ErrorBanner
+
+---
+
 ## Important Scientific Requirements
 
 These are non-negotiable for scientific correctness:
