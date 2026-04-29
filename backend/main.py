@@ -18,6 +18,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend.api.routes.downloader import router as downloader_router
+from backend.api.routes.imagery import router as imagery_router
 from backend.api.routes.processor import router as processor_router
 
 # ---------------------------------------------------------------------------
@@ -94,11 +95,10 @@ app.add_middleware(
 
 app.include_router(downloader_router)         # Module A — downloader
 app.include_router(processor_router)          # Module B — processor
+app.include_router(imagery_router)            # Module C — imagery
 
 # Uncomment as modules are implemented:
-# from backend.api.routes.imagery    import router as imagery_router
 # from backend.api.routes.visualizer import router as visualizer_router
-# app.include_router(imagery_router)           # Module C
 # app.include_router(visualizer_router)        # Module D
 
 

@@ -211,11 +211,11 @@ Implement in this order:
 |--------|---------|----------|
 | A — Downloader | ✅ Completo | ✅ Completo |
 | B — Processor  | ✅ Completo | ✅ Completo |
-| C — Imagery    | ⬜ Pendiente | ⬜ Pendiente |
+| C — Imagery    | ✅ Completo | ⬜ Pendiente |
 | D — Visualizer | ⬜ Pendiente | ⬜ Pendiente |
 | E — MCP        | ⬜ Pendiente | — (sin UI) |
 
-**Próximo paso:** `backend/core/plotting/maps.py` — generador de imágenes de mapas (Module C backend).
+**Próximo paso:** Frontend Module C — UI del generador de imágenes (`frontend/src/modules/imagery/`).
 
 ### Resumen de lo implementado
 
@@ -241,6 +241,12 @@ Implement in this order:
 - `frontend/src/store/processorStore.ts` — Zustand store (filePath, metadata, results, activeTab)
 - `ProcessorPage`, `FileLoader`, `MetadataPanel`, `VariableSelector`, `PlevSelector` (chips)
 - `ClimatologyForm`, `AnomalyForm`, `SpatialMeanPanel` (Plotly lazy), `PreviewPanel` (heatmap lazy), `IndicesPanel` (12 índices, Plotly lazy)
+
+**Module C — Imagery (backend)**
+- `backend/core/plotting/maps.py` — `render_map()`: cartopy maps con 7 proyecciones, stippling estadístico, bounding box, coastlines, gridlines, colorbar
+- `backend/core/plotting/hovmoller.py` — `render_hovmoller()`: diagramas tiempo×lat (avg lon) y tiempo×lon (avg lat con pesos coseno)
+- `backend/core/plotting/taylor.py` — `render_taylor()`: diagrama de Taylor con contornos RMSE, arcos de std, puntos por modelo
+- `backend/api/routes/imagery.py` — POST `/api/imagery/{render-map,render-hovmoller,render-taylor}`, WS `/ws/imagery/batch` (control de RAM con psutil)
 
 **Module A — Downloader (frontend)**
 - `frontend/src/store/downloaderStore.ts` — Zustand store (sources, search, selection, download state)
